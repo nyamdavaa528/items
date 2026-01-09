@@ -7,13 +7,12 @@
     <style>
       :root {
         --bg: #0b0f19;
-        --panel: #0f172a;
-        --card: #111827;
+        --panel: rgba(17, 24, 39, 0.8);
+        --panel2: rgba(15, 23, 42, 0.92);
         --text: #e5e7eb;
         --muted: #9ca3af;
         --line: rgba(255, 255, 255, 0.1);
         --chip: rgba(255, 255, 255, 0.06);
-        --chip2: rgba(255, 255, 255, 0.04);
         --good: #10b981;
         --bad: #ef4444;
         --warn: #f59e0b;
@@ -40,6 +39,7 @@
       }
       a {
         color: inherit;
+        text-decoration: none;
       }
       .wrap {
         max-width: 1280px;
@@ -56,7 +56,7 @@
       }
       .title {
         font-size: 18px;
-        font-weight: 750;
+        font-weight: 800;
         letter-spacing: 0.2px;
       }
       .subtitle {
@@ -65,8 +65,25 @@
         margin-top: 4px;
       }
 
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        cursor: pointer;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        padding: 10px 12px;
+        font-weight: 700;
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
       .controls {
-        background: rgba(17, 24, 39, 0.75);
+        background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 18px;
         padding: 12px;
@@ -90,8 +107,7 @@
         margin: 0 0 6px 2px;
       }
       input,
-      select,
-      button {
+      select {
         width: 100%;
         padding: 10px 12px;
         border-radius: 12px;
@@ -103,21 +119,13 @@
       input::placeholder {
         color: rgba(229, 231, 235, 0.45);
       }
-      button {
-        cursor: pointer;
-        background: rgba(255, 255, 255, 0.08);
-        font-weight: 650;
-      }
-      button:hover {
-        background: rgba(255, 255, 255, 0.12);
-      }
 
       .toggles {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         margin-top: 10px;
       }
       .toggle {
@@ -125,7 +133,7 @@
         gap: 8px;
         align-items: center;
         border: 1px solid var(--line);
-        background: var(--chip2);
+        background: rgba(255, 255, 255, 0.04);
         padding: 8px 10px;
         border-radius: 999px;
         font-size: 12px;
@@ -137,18 +145,26 @@
         margin: 0;
       }
 
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 10px;
+        line-height: 1.4;
+      }
+
       .bar {
         display: flex;
         gap: 10px;
         align-items: center;
         justify-content: space-between;
         margin: 12px 0 10px;
+        flex-wrap: wrap;
       }
       .meta {
         color: var(--muted);
         font-size: 12px;
         display: flex;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
         align-items: center;
       }
@@ -168,12 +184,11 @@
         white-space: nowrap;
       }
 
-      /* Table */
       .tablewrap {
         border: 1px solid var(--line);
         border-radius: 18px;
         overflow: hidden;
-        background: rgba(17, 24, 39, 0.75);
+        background: var(--panel);
         backdrop-filter: blur(10px);
       }
       table {
@@ -185,7 +200,7 @@
         position: sticky;
         top: 0;
         z-index: 2;
-        background: rgba(15, 23, 42, 0.92);
+        background: var(--panel2);
         border-bottom: 1px solid var(--line);
         text-align: left;
         font-size: 12px;
@@ -209,7 +224,7 @@
         gap: 10px;
         align-items: center;
         min-width: 360px;
-        max-width: 520px;
+        max-width: 560px;
       }
       .imgwrap {
         width: 52px;
@@ -263,11 +278,11 @@
         opacity: 1;
       }
       .name {
-        font-weight: 750;
+        font-weight: 800;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 420px;
+        max-width: 460px;
       }
       .sub {
         margin-top: 2px;
@@ -276,67 +291,31 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 420px;
+        max-width: 460px;
       }
-
       .num {
         font-variant-numeric: tabular-nums;
       }
       .good {
         color: var(--good);
-        font-weight: 750;
+        font-weight: 800;
       }
       .bad {
         color: var(--bad);
-        font-weight: 750;
+        font-weight: 800;
       }
       .warn {
         color: var(--warn);
-        font-weight: 750;
+        font-weight: 800;
       }
 
-      .pill {
-        display: inline-flex;
-        gap: 8px;
-        align-items: baseline;
-        padding: 6px 10px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.04);
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .pill strong {
-        color: var(--text);
-        font-weight: 750;
-      }
-
-      .hint {
-        color: var(--muted);
-        font-size: 12px;
-        margin-top: 10px;
-        line-height: 1.4;
-      }
-      .rightActions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        min-width: 260px;
-      }
       @media (max-width: 980px) {
         .grid,
         .grid2 {
           grid-template-columns: 1fr 1fr;
         }
-        .rightActions {
+        .actions {
           width: 100%;
-        }
-        .bar {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .chips {
-          justify-content: flex-start;
         }
         .itemcell {
           min-width: 280px;
@@ -354,12 +333,12 @@
         <div>
           <div class="title">Items Dashboard</div>
           <div class="subtitle">
-            Google Sheet → Steam images/price → filters/sorts
+            Sheet data → UI filters/sorts (Steam price optional)
           </div>
         </div>
-        <div class="rightActions">
-          <button id="refresh">Refresh</button>
-          <button id="clear">Clear</button>
+        <div class="actions">
+          <button id="refresh" type="button">Refresh</button>
+          <button id="clear" type="button">Clear</button>
         </div>
       </div>
 
@@ -367,7 +346,7 @@
         <div class="grid">
           <div>
             <label class="small">Search</label>
-            <input id="q" placeholder="AK-47, Slate, AWP, Factory New..." />
+            <input id="q" placeholder="AK-47, Slate, AWP..." />
           </div>
 
           <div>
@@ -393,7 +372,7 @@
           </div>
 
           <div>
-            <label class="small">Age</label>
+            <label class="small">Age (Received Ago)</label>
             <select id="age">
               <option value="">All</option>
               <option value="1">≤ 1 day</option>
@@ -412,6 +391,8 @@
               <option value="sheet_desc">Sheet price ↓</option>
               <option value="float_asc">Float ↑</option>
               <option value="float_desc">Float ↓</option>
+              <option value="name_asc">Name A→Z</option>
+              <option value="name_desc">Name Z→A</option>
               <option value="steam_asc">Steam lowest ↑</option>
               <option value="steam_desc">Steam lowest ↓</option>
               <option value="diffpct_best">
@@ -436,11 +417,11 @@
 
           <div>
             <label class="small">Steam lowest min</label>
-            <input id="smin" placeholder="(needs Steam price)" />
+            <input id="smin" placeholder="(Steam price ON үед)" />
           </div>
           <div>
             <label class="small">Steam lowest max</label>
-            <input id="smax" placeholder="(needs Steam price)" />
+            <input id="smax" placeholder="(Steam price ON үед)" />
           </div>
 
           <div>
@@ -458,12 +439,12 @@
             ><input type="checkbox" id="onlyimg" /> Has image</label
           >
           <label class="toggle"
-            ><input type="checkbox" id="dealonly" /> Deals only (Steam &lt;
-            Sheet)</label
-          >
-          <label class="toggle"
             ><input type="checkbox" id="steamprice" /> Include Steam
             price</label
+          >
+          <label class="toggle"
+            ><input type="checkbox" id="dealonly" /> Deals only (Steam &lt;
+            Sheet)</label
           >
           <label class="toggle"
             ><input type="checkbox" id="autorefresh" checked /> Auto refresh
@@ -472,8 +453,8 @@
         </div>
 
         <div class="hint">
-          “Include Steam price” асаахад /api/items?include_price=1 дуудна. Steam
-          тал удаан/түр блок хийж магадгүй тул шаардлагатай үед асаагаарай.
+          Steam price OFF үед Steam-related filters (Steam min/max, Deals,
+          Diff%) автоматаар үл тооцогдоно.
         </div>
       </div>
 
@@ -538,31 +519,34 @@
       function marketUrl(marketName) {
         return (
           "https://steamcommunity.com/market/listings/730/" +
-          encodeURIComponent(marketName)
+          encodeURIComponent(marketName || "")
         );
       }
 
-      // "7 days ago", "2 hours ago", "37 seconds ago" → minutes approx
+      // Supported examples in your data: "7 days ago", "22 hours ago", "37 seconds ago", "1 hour ago"
       function agoToMinutes(s) {
         if (!s) return null;
         const t = String(s).toLowerCase();
-        const m = t.match(/(\d+)\s*(second|minute|hour|day|week|month|year)/);
+        const m = t.match(
+          /(\d+)\s*(second|minute|hour|day|week|month|year)s?\s+ago/
+        );
         if (!m) return null;
         const v = Number(m[1]);
         const unit = m[2];
-        const mult = unit.startsWith("second")
-          ? 1 / 60
-          : unit.startsWith("minute")
-          ? 1
-          : unit.startsWith("hour")
-          ? 60
-          : unit.startsWith("day")
-          ? 1440
-          : unit.startsWith("week")
-          ? 10080
-          : unit.startsWith("month")
-          ? 43200
-          : 525600;
+        const mult =
+          unit === "second"
+            ? 1 / 60
+            : unit === "minute"
+            ? 1
+            : unit === "hour"
+            ? 60
+            : unit === "day"
+            ? 1440
+            : unit === "week"
+            ? 10080
+            : unit === "month"
+            ? 43200
+            : 525600;
         return v * mult;
       }
 
@@ -580,8 +564,8 @@
           dmax: num(el("dmax").value),
           age: el("age").value ? Number(el("age").value) : null,
           onlyimg: el("onlyimg").checked,
-          dealonly: el("dealonly").checked,
           includeSteam: el("steamprice").checked,
+          dealonly: el("dealonly").checked,
           sort: el("sort").value,
           autorefresh: el("autorefresh").checked,
         };
@@ -597,12 +581,18 @@
         if (state.pmax != null) chips.push(["Sheet ≤", state.pmax]);
         if (state.age != null) chips.push(["Age ≤", state.age + "d"]);
         if (state.onlyimg) chips.push(["Has image", "true"]);
-        if (state.dealonly) chips.push(["Deals", "Steam < Sheet"]);
         if (state.includeSteam) chips.push(["Steam price", "on"]);
-        if (state.smin != null) chips.push(["Steam ≥", state.smin]);
-        if (state.smax != null) chips.push(["Steam ≤", state.smax]);
-        if (state.dmin != null) chips.push(["Diff% ≥", state.dmin]);
-        if (state.dmax != null) chips.push(["Diff% ≤", state.dmax]);
+        if (state.includeSteam && state.dealonly)
+          chips.push(["Deals", "Steam < Sheet"]);
+        if (state.includeSteam && state.smin != null)
+          chips.push(["Steam ≥", state.smin]);
+        if (state.includeSteam && state.smax != null)
+          chips.push(["Steam ≤", state.smax]);
+        if (state.includeSteam && state.dmin != null)
+          chips.push(["Diff% ≥", state.dmin]);
+        if (state.includeSteam && state.dmax != null)
+          chips.push(["Diff% ≤", state.dmax]);
+
         chipsEl.innerHTML = chips
           .map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`)
           .join("");
@@ -623,12 +613,15 @@
           (state.includeSteam ? "&include_price=1" : "");
         const r = await fetch(url);
         const j = await r.json();
+
         if (j.error) {
           statusEl.textContent = "Error: " + j.error;
+          data = [];
+          tbody.innerHTML = "";
           return;
         }
 
-        data = j.items || [];
+        data = Array.isArray(j.items) ? j.items : [];
         statusEl.textContent = `Loaded ${
           data.length
         } items • ${new Date().toLocaleString()}`;
@@ -641,15 +634,18 @@
 
         let items = data.slice();
 
-        // filters
+        // Basic filters
         if (state.q) {
-          items = items.filter(
-            (it) =>
-              (it.marketName || "").toLowerCase().includes(state.q) ||
-              (it.name || "").toLowerCase().includes(state.q) ||
-              (it.wear || "").toLowerCase().includes(state.q)
-          );
+          items = items.filter((it) => {
+            const mn = (it.marketName || "").toLowerCase();
+            const n = (it.name || "").toLowerCase();
+            const w = (it.wear || "").toLowerCase();
+            return (
+              mn.includes(state.q) || n.includes(state.q) || w.includes(state.q)
+            );
+          });
         }
+
         if (state.cond)
           items = items.filter(
             (it) => (it.row?.[1] || it.wear || "") === state.cond
@@ -665,6 +661,7 @@
             (it) => num(it.row?.[2]) != null && num(it.row?.[2]) <= state.fmax
           );
 
+        // Sheet price from API or fallback to row[4] (your JSON shows sheetPrice exists :contentReference[oaicite:1]{index=1})
         if (state.pmin != null)
           items = items.filter(
             (it) =>
@@ -678,50 +675,54 @@
               (it.sheetPrice ?? num(it.row?.[4])) <= state.pmax
           );
 
-        // Steam ranges only meaningful when includeSteam=true (values might still be null)
-        if (state.smin != null)
-          items = items.filter(
-            (it) => it.steamLowest != null && it.steamLowest >= state.smin
-          );
-        if (state.smax != null)
-          items = items.filter(
-            (it) => it.steamLowest != null && it.steamLowest <= state.smax
-          );
-
-        if (state.dmin != null)
-          items = items.filter(
-            (it) => it.diffPct != null && it.diffPct >= state.dmin
-          );
-        if (state.dmax != null)
-          items = items.filter(
-            (it) => it.diffPct != null && it.diffPct <= state.dmax
-          );
-
-        if (state.dealonly) {
-          // Deals: Steam Lowest < Sheet Price
-          items = items.filter(
-            (it) =>
-              it.steamLowest != null &&
-              it.sheetPrice != null &&
-              it.steamLowest < it.sheetPrice
-          );
-        }
-
+        // Age filter only when selected
         if (state.age != null) {
           const maxMin = state.age * 1440;
           items = items.filter((it) => {
-            const mins = agoToMinutes(it.row?.[6]);
+            const mins = agoToMinutes(it.row?.[6]); // your data uses row[6] for "Received Ago" :contentReference[oaicite:2]{index=2}
             return mins != null && mins <= maxMin;
           });
         }
 
-        // sort keys
+        // Steam-related filters only when includeSteam=true
+        if (state.includeSteam) {
+          if (state.smin != null)
+            items = items.filter(
+              (it) => it.steamLowest != null && it.steamLowest >= state.smin
+            );
+          if (state.smax != null)
+            items = items.filter(
+              (it) => it.steamLowest != null && it.steamLowest <= state.smax
+            );
+
+          if (state.dmin != null)
+            items = items.filter(
+              (it) => it.diffPct != null && it.diffPct >= state.dmin
+            );
+          if (state.dmax != null)
+            items = items.filter(
+              (it) => it.diffPct != null && it.diffPct <= state.dmax
+            );
+
+          if (state.dealonly) {
+            items = items.filter(
+              (it) =>
+                it.steamLowest != null &&
+                (it.sheetPrice ?? num(it.row?.[4])) != null &&
+                it.steamLowest < (it.sheetPrice ?? num(it.row?.[4]))
+            );
+          }
+        }
+
+        // Sorting helpers
         const receivedKey = (it) => {
           const mins = agoToMinutes(it.row?.[6]);
           return mins == null ? 9e18 : mins; // smaller = newer
         };
-        const sheetKey = (it) => it.sheetPrice ?? null;
+        const sheetKey = (it) => it.sheetPrice ?? num(it.row?.[4]);
         const floatKey = (it) => num(it.row?.[2]);
+        const nameKey = (it) => it.marketName || it.name || "";
+
         const steamKey = (it) => it.steamLowest ?? null;
         const diffKey = (it) => it.diffPct ?? null;
 
@@ -730,6 +731,11 @@
           if (x == null) return 1;
           if (y == null) return -1;
           return (x - y) * dir;
+        };
+        const cmpStr = (x, y, dir = 1) => {
+          const a = String(x ?? "");
+          const b = String(y ?? "");
+          return a.localeCompare(b) * dir;
         };
 
         items.sort((a, b) => {
@@ -742,28 +748,31 @@
           if (s === "sheet_desc") return cmpNum(sheetKey(a), sheetKey(b), -1);
           if (s === "float_asc") return cmpNum(floatKey(a), floatKey(b), 1);
           if (s === "float_desc") return cmpNum(floatKey(a), floatKey(b), -1);
+          if (s === "name_asc") return cmpStr(nameKey(a), nameKey(b), 1);
+          if (s === "name_desc") return cmpStr(nameKey(a), nameKey(b), -1);
+
+          // Steam sorts only meaningful when includeSteam
           if (s === "steam_asc") return cmpNum(steamKey(a), steamKey(b), 1);
           if (s === "steam_desc") return cmpNum(steamKey(a), steamKey(b), -1);
-          if (s === "diffpct_best") return cmpNum(diffKey(a), diffKey(b), 1); // хамгийн сөрөг нь хамгийн сайн deal
+          if (s === "diffpct_best") return cmpNum(diffKey(a), diffKey(b), 1); // most negative first
           if (s === "diffpct_worst") return cmpNum(diffKey(a), diffKey(b), -1);
           return 0;
         });
 
+        // Render table
         tbody.innerHTML = items
           .map((it) => {
-            const r = it.row || [];
+            const r = Array.isArray(it.row) ? it.row : [];
             const condition = r[1] || it.wear || "—";
             const floatV = num(r[2]);
             const seed = r[3] || "—";
             const receivedAgo = r[6] || "—";
 
-            const sheetP = it.sheetPrice ?? num(r[4]); // Sheet price -> row[4]
+            const sheetP = it.sheetPrice ?? num(r[4]);
             const steamLow = it.steamLowest ?? null;
             const steamMed = it.steamMedian ?? null;
             const diffPct = it.diffPct ?? null;
 
-            // Diff% тэмдэглэгээ: Steam - Sheet / Sheet * 100
-            // сөрөг = Steam хямд (deal), эерэг = Steam үнэтэй
             let diffClass = "";
             if (diffPct != null)
               diffClass = diffPct < 0 ? "good" : diffPct > 0 ? "bad" : "warn";
@@ -789,8 +798,8 @@
                 <div class="name">
                   <a href="${esc(
                     marketUrl(it.marketName)
-                  )}" target="_blank" rel="noreferrer" style="text-decoration:none;">
-                    ${esc(it.marketName)}
+                  )}" target="_blank" rel="noreferrer">
+                    ${esc(it.marketName || it.name || "—")}
                   </a>
                 </div>
                 <div class="sub">${esc(condition)} • Seed ${esc(seed)}</div>
@@ -798,20 +807,12 @@
             </div>
           </td>
 
-          <td class="num">
-            <span class="pill"><strong>${esc(fmtFloat(floatV))}</strong></span>
-          </td>
-
+          <td class="num">${esc(fmtFloat(floatV))}</td>
           <td class="num">${esc(seed)}</td>
-
           <td class="num">${esc(fmt2(sheetP))}</td>
-
           <td class="num">${esc(fmt2(steamLow))}</td>
-
           <td class="num">${esc(fmt2(steamMed))}</td>
-
           <td class="num ${diffClass}">${esc(fmtPct(diffPct))}</td>
-
           <td>${esc(receivedAgo)}</td>
         </tr>
       `;
@@ -826,9 +827,7 @@
       function applyAutoRefresh() {
         const state = readState();
         if (timer) clearInterval(timer);
-        if (state.autorefresh) {
-          timer = setInterval(load, 60000);
-        }
+        if (state.autorefresh) timer = setInterval(load, 60000);
       }
 
       function clearAll() {
@@ -847,8 +846,8 @@
         el("dmax").value = "";
 
         el("onlyimg").checked = false;
-        el("dealonly").checked = false;
         el("steamprice").checked = false;
+        el("dealonly").checked = false;
         el("autorefresh").checked = true;
 
         applyAutoRefresh();
@@ -856,7 +855,7 @@
       }
 
       function wire() {
-        const ids = [
+        const rerenderIds = [
           "q",
           "cond",
           "fmin",
@@ -872,13 +871,14 @@
           "onlyimg",
           "dealonly",
         ];
-        ids.forEach((id) => {
+        rerenderIds.forEach((id) => {
           el(id).addEventListener("input", render);
           el(id).addEventListener("change", render);
         });
 
         el("steamprice").addEventListener("change", () => {
-          load(); // backend-аас steam price-тэй json дахин татна
+          // Steam price ON/OFF өөрчлөгдвөл data-г дахин татна
+          load();
         });
 
         el("autorefresh").addEventListener("change", applyAutoRefresh);
