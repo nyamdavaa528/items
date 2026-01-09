@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Items</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 16px;
+        background: #fafafa;
+      }
+      header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      input {
+        width: min(520px, 100%);
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+      }
+      button {
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .meta {
+        color: #555;
+        font-size: 12px;
+        margin: 8px 0 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e7e7e7;
+        border-radius: 14px;
+        padding: 12px;
+        display: flex;
+        gap: 12px;
+      }
+      .img {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        background: #fcfcfc;
+        object-fit: contain;
+      }
+      .name {
+        font-weight: 700;
+      }
+      .sub {
+        color: #555;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .row {
+        color: #111;
+        font-size: 12px;
+        margin-top: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .muted {
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <input id="q" placeholder="Хайх… (ж: AK-47, Slate, Well-Worn)" />
+      <div style="display: flex; gap: 8px">
+        <button id="refresh">Refresh</button>
+        <button id="auto">Auto: ON</button>
+      </div>
+    </header>
+
+    <div class="meta" id="status">Loading…</div>
+    <div class="grid" id="grid"></div>
+
+    <script>
+      let data = [];
+      let autoOn = true;
+      let timer = null;
+
+      const statusEl = document.getElementById("status");
+      const grid = document.getElementById("grid");
+      const q = document.getElementById("q");
+
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[c])
+        );
+      }
+
+      async function load() {
+        statusEl.textContent = "Fetching…";
+        const r = await fetch("/api/items?t=" + Date.now());
+        const j = await r.json();
+        if (j.error) {
+          statusEl.textContent = "Error: " + j.error;
+          return;
+        }
+        data = j.items || [];
+        statusEl.textContent =
+          "Last updated: " +
+          new Date().toLocaleString() +
+          " | Items: " +
+          data.length;
+        render();
+      }
+
+      function render() {
+        const query = q.value.trim().toLowerCase();
+        const items = !query
+          ? data
+          : data.filter(
+              (it) =>
+                (it.marketName || "").toLowerCase().includes(query) ||
+                (it.name || "").toLowerCase().includes(query) ||
+                (it.wear || "").toLowerCase().includes(query)
+            );
+
+        grid.innerHTML = items
+          .map((it) => {
+            const img = it.imageUrl
+              ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(
+                  it.marketName
+                )}" loading="lazy">`
+              : `<div class="img" style="display:flex;align-items:center;justify-content:center;"><span class="muted">no image</span></div>`;
+
+            // row мэдээллээ хүсвэл эндээс өөрийнхөөрөө харуулж болно
+            const rawRow = (it.row || []).join(" | ");
+
+            return `
+          <div class="card">
+            ${img}
+            <div style="min-width:0">
+              <div class="name">${esc(it.marketName)}</div>
+              <div class="sub">${esc(it.name)} • ${esc(it.wear)}</div>
+              <div class="row muted" title="${esc(rawRow)}">${esc(rawRow)}</div>
+            </div>
+          </div>
+        `;
+          })
+          .join("");
+      }
+
+      function setAuto(on) {
+        autoOn = on;
+        document.getElementById("auto").textContent =
+          "Auto: " + (on ? "ON" : "OFF");
+        if (timer) clearInterval(timer);
+        if (on) timer = setInterval(load, 30000); // 30 секунд тутам
+      }
+
+      q.addEventListener("input", render);
+      document.getElementById("refresh").addEventListener("click", load);
+      document
+        .getElementById("auto")
+        .addEventListener("click", () => setAuto(!autoOn));
+
+      load();
+      setAuto(true);
+    </script>
+  </body>
+</html>
