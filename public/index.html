@@ -3,100 +3,257 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Items</title>
+    <title>Items Dashboard</title>
     <style>
+      :root {
+        --bg: #0b0f19;
+        --card: #111827;
+        --muted: #9ca3af;
+        --text: #e5e7eb;
+        --line: rgba(255, 255, 255, 0.08);
+        --chip: rgba(255, 255, 255, 0.06);
+        --good: #10b981;
+        --bad: #ef4444;
+      }
       body {
-        font-family: Arial, sans-serif;
-        margin: 16px;
-        background: #fafafa;
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Arial;
+        background: var(--bg);
+        color: var(--text);
       }
-      header {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
+      a {
+        color: inherit;
       }
-      input {
-        width: min(520px, 100%);
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .top {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr;
+        gap: 10px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
         padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        outline: none;
       }
       button {
-        padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        background: #fff;
         cursor: pointer;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.09);
+      }
+
+      .row2 {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin: 12px 0 10px;
       }
       .meta {
-        color: #555;
+        color: var(--muted);
         font-size: 12px;
-        margin: 8px 0 14px;
       }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 12px;
-      }
-      .card {
-        background: #fff;
-        border: 1px solid #e7e7e7;
-        border-radius: 14px;
-        padding: 12px;
+      .chips {
         display: flex;
-        gap: 12px;
+        gap: 8px;
+        flex-wrap: wrap;
       }
-      .img {
-        width: 72px;
-        height: 72px;
+      .chip {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        background: var(--chip);
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: var(--card);
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(8px);
+        text-align: left;
+        font-size: 12px;
+        color: var(--muted);
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .itemcell {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-width: 340px;
+      }
+      .imgwrap {
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
-        border: 1px solid #eee;
-        background: #fcfcfc;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex: 0 0 auto;
+      }
+      img {
+        width: 48px;
+        height: 48px;
         object-fit: contain;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      img.loaded {
+        opacity: 1;
       }
       .name {
-        font-weight: 700;
+        font-weight: 650;
       }
       .sub {
-        color: #555;
+        color: var(--muted);
         font-size: 12px;
-        margin-top: 4px;
+        margin-top: 2px;
       }
-      .row {
-        color: #111;
-        font-size: 12px;
-        margin-top: 8px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .num {
+        font-variant-numeric: tabular-nums;
       }
-      .muted {
-        color: #888;
+      .good {
+        color: var(--good);
+        font-weight: 650;
+      }
+      .bad {
+        color: var(--bad);
+        font-weight: 650;
+      }
+
+      .right {
+        display: flex;
+        gap: 10px;
+      }
+      .toggle {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .toggle input {
+        width: auto;
       }
     </style>
   </head>
   <body>
-    <header>
-      <input id="q" placeholder="Хайх… (ж: AK-47, Slate, Well-Worn)" />
-      <div style="display: flex; gap: 8px">
-        <button id="refresh">Refresh</button>
-        <button id="auto">Auto: ON</button>
-      </div>
-    </header>
+    <div class="wrap">
+      <div class="top">
+        <input id="q" placeholder="Search (AK-47, Slate, AWP...)" />
+        <select id="cond">
+          <option value="">All Conditions</option>
+          <option>Factory New</option>
+          <option>Minimal Wear</option>
+          <option>Field-Tested</option>
+          <option>Well-Worn</option>
+          <option>Battle-Scarred</option>
+        </select>
+        <input id="fmin" placeholder="Float min (e.g. 0.00)" />
+        <input id="fmax" placeholder="Float max (e.g. 0.30)" />
+        <select id="sort">
+          <option value="received_desc">Sort: Received (newest)</option>
+          <option value="sheet_asc">Sort: Sheet Price ↑</option>
+          <option value="sheet_desc">Sort: Sheet Price ↓</option>
+          <option value="float_asc">Sort: Float ↑</option>
+          <option value="float_desc">Sort: Float ↓</option>
+          <option value="steam_asc">Sort: Steam Lowest ↑</option>
+          <option value="steam_desc">Sort: Steam Lowest ↓</option>
+          <option value="diffpct_asc">Sort: Diff% ↑ (Steam cheaper)</option>
+          <option value="diffpct_desc">
+            Sort: Diff% ↓ (Steam more expensive)
+          </option>
+        </select>
 
-    <div class="meta" id="status">Loading…</div>
-    <div class="grid" id="grid"></div>
+        <input id="pmin" placeholder="Sheet price min" />
+        <input id="pmax" placeholder="Sheet price max" />
+        <select id="age">
+          <option value="">Age: All</option>
+          <option value="1">Age: ≤ 1 day</option>
+          <option value="7">Age: ≤ 7 days</option>
+          <option value="30">Age: ≤ 30 days</option>
+        </select>
+
+        <div class="toggle" style="grid-column: span 2">
+          <label class="chip"
+            ><input type="checkbox" id="onlyimg" /> Has image</label
+          >
+          <label class="chip"
+            ><input type="checkbox" id="steamprice" /> Include Steam
+            price</label
+          >
+          <button id="refresh" style="max-width: 160px">Refresh</button>
+          <button id="clear" style="max-width: 160px">Clear</button>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="meta" id="status">Loading…</div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Float</th>
+            <th>Seed</th>
+            <th class="num">Sheet</th>
+            <th class="num">Steam Low</th>
+            <th class="num">Diff%</th>
+            <th>Received</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
 
     <script>
-      let data = [];
-      let autoOn = true;
-      let timer = null;
-
-      const statusEl = document.getElementById("status");
-      const grid = document.getElementById("grid");
-      const q = document.getElementById("q");
+      const el = (id) => document.getElementById(id);
+      const statusEl = el("status");
+      const tbody = el("tbody");
+      const chipsEl = el("chips");
 
       function esc(s) {
         return String(s ?? "").replace(
@@ -111,76 +268,279 @@
             }[c])
         );
       }
+      function num(x) {
+        const n = Number(String(x ?? "").replace(/[^0-9.\-]/g, ""));
+        return Number.isFinite(n) ? n : null;
+      }
+      function fmt2(n) {
+        return n == null ? "—" : n.toFixed(2);
+      }
+      function fmtFloat(n) {
+        return n == null ? "—" : n.toFixed(6);
+      }
+
+      function marketUrl(marketName) {
+        return (
+          "https://steamcommunity.com/market/listings/730/" +
+          encodeURIComponent(marketName)
+        );
+      }
+
+      // "7 days ago", "2 hours ago" → minutes approx (best-effort)
+      function agoToMinutes(s) {
+        if (!s) return null;
+        const t = String(s).toLowerCase();
+        const m = t.match(/(\d+)\s*(minute|hour|day|week|month|year)/);
+        if (!m) return null;
+        const v = Number(m[1]);
+        const unit = m[2];
+        const mult = unit.startsWith("minute")
+          ? 1
+          : unit.startsWith("hour")
+          ? 60
+          : unit.startsWith("day")
+          ? 1440
+          : unit.startsWith("week")
+          ? 10080
+          : unit.startsWith("month")
+          ? 43200
+          : 525600;
+        return v * mult;
+      }
+
+      let data = [];
 
       async function load() {
-        statusEl.textContent = "Fetching…";
-        const r = await fetch("/api/items?t=" + Date.now());
+        const includeSteam = el("steamprice").checked;
+        statusEl.textContent = includeSteam
+          ? "Fetching (incl. Steam price)…"
+          : "Fetching…";
+
+        const url =
+          "/api/items?t=" +
+          Date.now() +
+          (includeSteam ? "&include_price=1" : "");
+        const r = await fetch(url);
         const j = await r.json();
         if (j.error) {
           statusEl.textContent = "Error: " + j.error;
           return;
         }
         data = j.items || [];
-        statusEl.textContent =
-          "Last updated: " +
-          new Date().toLocaleString() +
-          " | Items: " +
-          data.length;
+        statusEl.textContent = `Loaded: ${
+          data.length
+        } items • ${new Date().toLocaleString()}`;
         render();
       }
 
-      function render() {
-        const query = q.value.trim().toLowerCase();
-        const items = !query
-          ? data
-          : data.filter(
-              (it) =>
-                (it.marketName || "").toLowerCase().includes(query) ||
-                (it.name || "").toLowerCase().includes(query) ||
-                (it.wear || "").toLowerCase().includes(query)
-            );
+      function buildChips(state) {
+        const chips = [];
+        if (state.q) chips.push(["Search", state.q]);
+        if (state.cond) chips.push(["Cond", state.cond]);
+        if (state.fmin != null) chips.push(["Float ≥", state.fmin]);
+        if (state.fmax != null) chips.push(["Float ≤", state.fmax]);
+        if (state.pmin != null) chips.push(["Sheet ≥", state.pmin]);
+        if (state.pmax != null) chips.push(["Sheet ≤", state.pmax]);
+        if (state.age) chips.push(["Age ≤", state.age + "d"]);
+        if (state.onlyimg) chips.push(["Has image", "true"]);
+        if (state.includeSteam) chips.push(["Steam price", "on"]);
 
-        grid.innerHTML = items
-          .map((it) => {
-            const img = it.imageUrl
-              ? `<img class="img" src="${esc(it.imageUrl)}" alt="${esc(
-                  it.marketName
-                )}" loading="lazy">`
-              : `<div class="img" style="display:flex;align-items:center;justify-content:center;"><span class="muted">no image</span></div>`;
-
-            // row мэдээллээ хүсвэл эндээс өөрийнхөөрөө харуулж болно
-            const rawRow = (it.row || []).join(" | ");
-
-            return `
-          <div class="card">
-            ${img}
-            <div style="min-width:0">
-              <div class="name">${esc(it.marketName)}</div>
-              <div class="sub">${esc(it.name)} • ${esc(it.wear)}</div>
-              <div class="row muted" title="${esc(rawRow)}">${esc(rawRow)}</div>
-            </div>
-          </div>
-        `;
-          })
+        chipsEl.innerHTML = chips
+          .map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`)
           .join("");
       }
 
-      function setAuto(on) {
-        autoOn = on;
-        document.getElementById("auto").textContent =
-          "Auto: " + (on ? "ON" : "OFF");
-        if (timer) clearInterval(timer);
-        if (on) timer = setInterval(load, 30000); // 30 секунд тутам
+      function render() {
+        const state = {
+          q: el("q").value.trim().toLowerCase(),
+          cond: el("cond").value.trim(),
+          fmin: num(el("fmin").value),
+          fmax: num(el("fmax").value),
+          pmin: num(el("pmin").value),
+          pmax: num(el("pmax").value),
+          age: el("age").value ? Number(el("age").value) : null,
+          onlyimg: el("onlyimg").checked,
+          includeSteam: el("steamprice").checked,
+          sort: el("sort").value,
+        };
+        buildChips(state);
+
+        let items = data.slice();
+
+        // filters
+        if (state.q) {
+          items = items.filter(
+            (it) =>
+              (it.marketName || "").toLowerCase().includes(state.q) ||
+              (it.name || "").toLowerCase().includes(state.q) ||
+              (it.wear || "").toLowerCase().includes(state.q)
+          );
+        }
+        if (state.cond)
+          items = items.filter(
+            (it) => (it.row?.[1] || it.wear || "") === state.cond
+          );
+
+        if (state.onlyimg) items = items.filter((it) => !!it.imageUrl);
+
+        if (state.fmin != null)
+          items = items.filter(
+            (it) => num(it.row?.[2]) != null && num(it.row?.[2]) >= state.fmin
+          );
+        if (state.fmax != null)
+          items = items.filter(
+            (it) => num(it.row?.[2]) != null && num(it.row?.[2]) <= state.fmax
+          );
+
+        if (state.pmin != null)
+          items = items.filter(
+            (it) => num(it.row?.[4]) != null && num(it.row?.[4]) >= state.pmin
+          );
+        if (state.pmax != null)
+          items = items.filter(
+            (it) => num(it.row?.[4]) != null && num(it.row?.[4]) <= state.pmax
+          );
+
+        if (state.age != null) {
+          const maxMin = state.age * 1440;
+          items = items.filter((it) => {
+            const mins = agoToMinutes(it.row?.[6]);
+            return mins != null && mins <= maxMin;
+          });
+        }
+
+        // sort
+        const getReceivedKey = (it) => {
+          const mins = agoToMinutes(it.row?.[6]);
+          // newest = smallest minutes
+          return mins == null ? 9e18 : mins;
+        };
+        const getSheet = (it) => num(it.row?.[4]);
+        const getFloat = (it) => num(it.row?.[2]);
+        const getSteam = (it) => it.steamLowest ?? null;
+        const getDiffPct = (it) => it.diffPct ?? null;
+
+        items.sort((a, b) => {
+          const s = state.sort;
+          const A = (fn) => fn(a),
+            B = (fn) => fn(b);
+          const cmpNum = (x, y, dir = 1) => {
+            if (x == null && y == null) return 0;
+            if (x == null) return 1;
+            if (y == null) return -1;
+            return (x - y) * dir;
+          };
+          if (s === "received_desc")
+            return cmpNum(getReceivedKey(a), getReceivedKey(b), 1);
+          if (s === "sheet_asc") return cmpNum(getSheet(a), getSheet(b), 1);
+          if (s === "sheet_desc") return cmpNum(getSheet(a), getSheet(b), -1);
+          if (s === "float_asc") return cmpNum(getFloat(a), getFloat(b), 1);
+          if (s === "float_desc") return cmpNum(getFloat(a), getFloat(b), -1);
+          if (s === "steam_asc") return cmpNum(getSteam(a), getSteam(b), 1);
+          if (s === "steam_desc") return cmpNum(getSteam(a), getSteam(b), -1);
+          if (s === "diffpct_asc")
+            return cmpNum(getDiffPct(a), getDiffPct(b), 1);
+          if (s === "diffpct_desc")
+            return cmpNum(getDiffPct(a), getDiffPct(b), -1);
+          return 0;
+        });
+
+        tbody.innerHTML = items
+          .map((it) => {
+            const r = it.row || [];
+            const condition = r[1] || it.wear || "—";
+            const floatV = num(r[2]);
+            const seed = r[3] || "—";
+            const sheetP = num(r[4]);
+            const receivedAgo = r[6] || "—";
+
+            const steamLow = it.steamLowest ?? null;
+            const diffPct = it.diffPct ?? null;
+
+            const diffClass =
+              diffPct == null ? "" : diffPct < 0 ? "good" : "bad"; // Steam < Sheet бол diffPct сөрөг
+            const diffText =
+              diffPct == null
+                ? "—"
+                : diffPct > 0
+                ? `+${diffPct.toFixed(1)}%`
+                : `${diffPct.toFixed(1)}%`;
+
+            const img = it.imageUrl
+              ? `<img src="${esc(
+                  it.imageUrl
+                )}" alt="" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous"
+               onload="this.classList.add('loaded')" />`
+              : "";
+
+            return `
+        <tr>
+          <td>
+            <div class="itemcell">
+              <div class="imgwrap">${img}</div>
+              <div style="min-width:0">
+                <div class="name">
+                  <a href="${esc(
+                    marketUrl(it.marketName)
+                  )}" target="_blank" rel="noreferrer" style="text-decoration:none;">
+                    ${esc(it.name || it.marketName)}
+                  </a>
+                </div>
+                <div class="sub">${esc(condition)}</div>
+              </div>
+            </div>
+          </td>
+          <td class="num">${esc(fmtFloat(floatV))}</td>
+          <td class="num">${esc(seed)}</td>
+          <td class="num">${esc(fmt2(sheetP))}</td>
+          <td class="num">${esc(fmt2(steamLow))}</td>
+          <td class="num ${diffClass}">${esc(diffText)}</td>
+          <td>${esc(receivedAgo)}</td>
+        </tr>
+      `;
+          })
+          .join("");
+
+        statusEl.textContent = `Showing: ${items.length} / ${
+          data.length
+        } • ${new Date().toLocaleString()}`;
       }
 
-      q.addEventListener("input", render);
-      document.getElementById("refresh").addEventListener("click", load);
-      document
-        .getElementById("auto")
-        .addEventListener("click", () => setAuto(!autoOn));
+      function wire() {
+        [
+          "q",
+          "cond",
+          "fmin",
+          "fmax",
+          "pmin",
+          "pmax",
+          "age",
+          "onlyimg",
+          "sort",
+        ].forEach((id) => {
+          el(id).addEventListener("input", render);
+          el(id).addEventListener("change", render);
+        });
 
+        el("steamprice").addEventListener("change", load);
+        el("refresh").addEventListener("click", load);
+
+        el("clear").addEventListener("click", () => {
+          el("q").value = "";
+          el("cond").value = "";
+          el("fmin").value = "";
+          el("fmax").value = "";
+          el("pmin").value = "";
+          el("pmax").value = "";
+          el("age").value = "";
+          el("onlyimg").checked = false;
+          el("sort").value = "received_desc";
+          render();
+        });
+      }
+
+      wire();
       load();
-      setAuto(true);
     </script>
   </body>
 </html>

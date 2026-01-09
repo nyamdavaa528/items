@@ -16,7 +16,11 @@ const STEAM_APPID = process.env.STEAM_APPID || "730";
 
 // ===== Simple in-memory cache =====
 const imageCache = new Map(); // key: marketName, val: { imageUrl, ts }
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 цаг
+// Илүү удаан хадгалвал Render cold start үед ч илүү хурдан
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 цаг
+
+const priceCache = new Map(); // key: marketName, val: { data, ts }
+const PRICE_TTL_MS = 30 * 60 * 1000; // 30 минут
 
 function now() {
   return Date.now();
@@ -34,6 +38,28 @@ function cacheGet(key) {
 
 function cacheSet(key, imageUrl) {
   imageCache.set(key, { imageUrl, ts: now() });
+}
+
+function priceCacheGet(key) {
+  const v = priceCache.get(key);
+  if (!v) return null;
+  if (now() - v.ts > PRICE_TTL_MS) {
+    priceCache.delete(key);
+    return null;
+  }
+  return v.data;
+}
+
+function priceCacheSet(key, data) {
+  priceCache.set(key, { data, ts: now() });
+}
+
+// ===== Fix blurry images =====
+// Steam economy image URL төгсгөлдөө /62fx62f мэт жижиг size-тэй ирдэг.
+// Үүнийг /360fx360f (эсвэл /256fx256f) болгон солино.
+function upgradeSteamImageSize(url) {
+  if (!url) return url;
+  return String(url).replace(/\/\d+fx\d+f$/, "/360fx360f");
 }
 
 // ===== CSV parser (ишлэлтэй утга дэмжинэ) =====
@@ -82,20 +108,16 @@ async function mapLimit(items, limit, fn) {
 }
 
 // ===== Steam market image lookup =====
-// Strategy:
-// 1) market/search/render JSON endpoint (зарим тохиолдолд assets өгдөг, icon_url гарна)
-// 2) Хэрэв JSON-оос олдохгүй бол results_html доторх image src-ийг regex-ээр сугална
-// Note: Steam response өөрчлөгдвөл энд тааруулна.
 async function fetchSteamImage(marketName) {
   const cached = cacheGet(marketName);
-  if (cached) return cached;
+  // cached утга null байж болно (өмнө нь олдохгүй байсан гэсэн үг)
+  if (cached !== null && cached !== undefined) return cached;
 
   const query = encodeURIComponent(marketName);
   const url = `https://steamcommunity.com/market/search/render/?query=${query}&appid=${STEAM_APPID}&count=1&start=0`;
 
   const resp = await fetch(url, {
     headers: {
-      // User-Agent байхгүй бол заримдаа блоклогддог
       "User-Agent": "Mozilla/5.0 (Render; Node.js)",
       Accept: "application/json,text/plain,*/*",
     },
@@ -108,24 +130,21 @@ async function fetchSteamImage(marketName) {
   const data = await resp.json();
 
   // --- Attempt A: assets-аас icon_url хайх ---
-  // data.assets нь заримдаа аппid/контекстээр бүлэглэгддэг.
   let iconUrl = null;
   try {
     const assets = data?.assets;
     if (assets) {
-      // Нэлээн олон хэлбэртэй ирж болно. Бид бүх давхаргыг тойрно.
       const stack = [assets];
       while (stack.length) {
         const node = stack.pop();
         if (!node) continue;
         if (typeof node === "object") {
-          // description объект байж магадгүй
-          if (node.icon_url && typeof node.icon_url === "string") {
-            iconUrl = node.icon_url;
-            break;
-          }
           if (node.icon_url_large && typeof node.icon_url_large === "string") {
             iconUrl = node.icon_url_large;
+            break;
+          }
+          if (node.icon_url && typeof node.icon_url === "string") {
+            iconUrl = node.icon_url;
             break;
           }
           for (const k of Object.keys(node)) stack.push(node[k]);
@@ -134,39 +153,65 @@ async function fetchSteamImage(marketName) {
     }
   } catch (_) {}
 
-  // iconUrl нь ихэвчлэн relative/token байдаг тул Steam static домэйнээр бүрэн болгоно
   if (iconUrl) {
     const full = iconUrl.startsWith("http")
       ? iconUrl
       : `https://community.cloudflare.steamstatic.com/economy/image/${iconUrl}`;
-    cacheSet(marketName, full);
-    return full;
+
+    const upgraded = upgradeSteamImageSize(full);
+    cacheSet(marketName, upgraded);
+    return upgraded;
   }
 
-  // --- Attempt B: results_html-оос зурагны src сугална ---
+  // --- Attempt B: results_html-оос src сугална ---
   const html = data?.results_html || "";
-  // results_html доторх img tag-уудын src ихэвчлэн steamstatic домэйнтэй байдаг
   const m =
     html.match(/<img[^>]+src="([^"]+steamstatic[^"]+)"[^>]*>/i) ||
     html.match(/<img[^>]+src="([^"]+)"[^>]*>/i);
 
   if (m && m[1]) {
     const src = m[1].replace(/&amp;/g, "&");
-    cacheSet(marketName, src);
-    return src;
+    const upgraded = upgradeSteamImageSize(src);
+    cacheSet(marketName, upgraded);
+    return upgraded;
   }
 
-  // Олдохгүй бол null буцаана (frontend дээр placeholder харуулна)
   cacheSet(marketName, null);
   return null;
 }
 
+// ===== Steam priceoverview =====
+async function fetchSteamPrice(marketName) {
+  const cached = priceCacheGet(marketName);
+  if (cached) return cached;
+
+  const url = `https://steamcommunity.com/market/priceoverview/?appid=${STEAM_APPID}&currency=1&market_hash_name=${encodeURIComponent(
+    marketName
+  )}`;
+
+  const r = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Render; Node.js)",
+      Accept: "application/json,text/plain,*/*",
+    },
+  });
+
+  if (!r.ok) throw new Error(`priceoverview failed: ${r.status}`);
+
+  const j = await r.json();
+  priceCacheSet(marketName, j);
+  return j;
+}
+
+function moneyToNumber(x) {
+  if (!x) return null;
+  const n = Number(String(x).replace(/[^0-9.\-]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
 // ===== Market name builder =====
-// Таны мөр: "AK-47 | Slate", "Well-Worn" гэх мэт.
-// Market дээр ихэнхдээ "AK-47 | Slate (Well-Worn)" хэлбэртэй.
 function toMarketName(itemName, wear) {
   if (!wear) return itemName;
-  // wear дотор хоосон, таб, гэх мэтийг цэвэрлэнэ
   const w = String(wear).trim();
   const n = String(itemName).trim();
   return `${n} (${w})`;
@@ -182,24 +227,25 @@ async function readSheetRows() {
   });
   if (!r.ok) throw new Error(`Sheet CSV fetch failed: ${r.status}`);
   const text = await r.text();
-  const rows = parseCsv(text);
-  return rows;
+  return parseCsv(text);
 }
 
-// ===== API: items with images =====
+// ===== API: items with images (+ optional Steam price) =====
 app.get("/api/items", async (req, res) => {
   try {
+    const includePrice = String(req.query.include_price || "0") === "1";
+
     const rows = await readSheetRows();
     if (!rows.length) return res.json({ items: [] });
 
     const header = rows[0];
     const body = rows.slice(1);
 
-    // Танай sheet багануудын дараалал одоогоор:
-    // 0: ItemName, 1: Wear, 2: Float, 3: ???, 4: Price, ...
-    // Хэрвээ өөр байвал index-уудыг тохируулна.
+    // Таны sheet багануудын дараалал:
+    // 0: ItemName, 1: Condition, 2: Float, 3: Paint Seed, 4: Price, 5: Received At, 6: Received Ago, 7: Timestamp ...
     const IDX_NAME = 0;
     const IDX_WEAR = 1;
+    const IDX_SHEET_PRICE = 4;
 
     const items = body
       .filter((r) => r[IDX_NAME])
@@ -210,28 +256,63 @@ app.get("/api/items", async (req, res) => {
         return { row: r, name, wear, marketName };
       });
 
-    // Steam рүү хэт олон хүсэлт явуулахгүйн тулд 3 concurrency
-    const enriched = await mapLimit(items, 3, async (it) => {
+    // Steam рүү хэт олон хүсэлт явуулахгүйн тулд concurrency-г жижиг байлгана
+    const enriched = await mapLimit(items, includePrice ? 2 : 3, async (it) => {
       let imageUrl = null;
       try {
         imageUrl = await fetchSteamImage(it.marketName);
-      } catch (e) {
-        // Steam тал алдаа гарвал шууд null үлдээнэ
+      } catch {
         imageUrl = null;
       }
+
+      // Sheet price
+      const sheetPriceRaw = it.row?.[IDX_SHEET_PRICE];
+      const sheetPriceNum = Number(
+        String(sheetPriceRaw ?? "").replace(/[^0-9.\-]/g, "")
+      );
+      const sheetPrice = Number.isFinite(sheetPriceNum) ? sheetPriceNum : null;
+
+      // Steam price (optional)
+      let steamLowest = null;
+      let steamMedian = null;
+      let steamVolume = null;
+      let diff = null;
+      let diffPct = null;
+
+      if (includePrice) {
+        try {
+          const p = await fetchSteamPrice(it.marketName);
+          steamLowest = moneyToNumber(p.lowest_price);
+          steamMedian = moneyToNumber(p.median_price);
+          steamVolume = moneyToNumber(p.volume);
+
+          if (steamLowest != null && sheetPrice != null) {
+            diff = steamLowest - sheetPrice;
+            diffPct = sheetPrice !== 0 ? (diff / sheetPrice) * 100 : null;
+          }
+        } catch {
+          // үлдэгдэл нь null хэвээр
+        }
+      }
+
       return {
         name: it.name,
         wear: it.wear,
         marketName: it.marketName,
         imageUrl,
         row: it.row,
+
+        // нэмэлт талбарууд (frontend-д filter/sort хийхэд хэрэгтэй)
+        sheetPrice,
+        steamLowest,
+        steamMedian,
+        steamVolume,
+        diff,
+        diffPct,
       };
     });
 
-    res.json({
-      header,
-      items: enriched,
-    });
+    res.json({ header, items: enriched });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
