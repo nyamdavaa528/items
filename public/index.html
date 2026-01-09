@@ -667,11 +667,15 @@
 
         if (state.pmin != null)
           items = items.filter(
-            (it) => it.sheetPrice != null && it.sheetPrice >= state.pmin
+            (it) =>
+              (it.sheetPrice ?? num(it.row?.[4])) != null &&
+              (it.sheetPrice ?? num(it.row?.[4])) >= state.pmin
           );
         if (state.pmax != null)
           items = items.filter(
-            (it) => it.sheetPrice != null && it.sheetPrice <= state.pmax
+            (it) =>
+              (it.sheetPrice ?? num(it.row?.[4])) != null &&
+              (it.sheetPrice ?? num(it.row?.[4])) <= state.pmax
           );
 
         // Steam ranges only meaningful when includeSteam=true (values might still be null)
@@ -753,7 +757,7 @@
             const seed = r[3] || "—";
             const receivedAgo = r[6] || "—";
 
-            const sheetP = it.sheetPrice ?? null;
+            const sheetP = it.sheetPrice ?? num(r[4]); // Sheet price -> row[4]
             const steamLow = it.steamLowest ?? null;
             const steamMed = it.steamMedian ?? null;
             const diffPct = it.diffPct ?? null;
