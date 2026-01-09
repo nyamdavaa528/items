@@ -191,7 +191,7 @@ async function fetchSteamPrice(_marketName) {
 // ===== Background refresh control =====
 const PRICE_TTL_MS = 30 * 60 * 1000; // 30 min
 const IMAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const MAX_CONCURRENCY = 3;
+const MAX_CONCURRENCY = 1;
 
 const inFlight = new Set();
 
@@ -378,12 +378,12 @@ app.get("/api/items", async (req, res) => {
 
     // 3) Fire-and-forget refresh for the currently served set
     //    (Do NOT await)
-    for (const it of items) {
-      refreshOne(it.marketName, {
-        refreshPrice: includePrice,
-        refreshImage: true,
-      });
-    }
+    // зөвхөн хамгийн сүүлд харагдсан N item дээр refresh ажиллуул
+const N = 20; // 20–50 хооронд тохируул
+for (const it of items.slice(0, N)) {
+  refreshOne(it.marketName, { refreshPrice: includePrice, refreshImage: true });
+}
+
 
     res.json({ header, items });
   } catch (e) {
@@ -403,3 +403,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   refreshLoop();
 });
+
