@@ -17,10 +17,17 @@
         }[c])
     );
   }
+
+  // IMPORTANT: empty => null (fixes your earlier issue)
   function num(x) {
-    const n = Number(String(x ?? "").replace(/[^0-9.\-]/g, ""));
+    const s0 = String(x ?? "").trim();
+    if (!s0) return null;
+    const s = s0.replace(/[^0-9.\-]/g, "");
+    if (!s || s === "-" || s === "." || s === "-.") return null;
+    const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
+
   function fmt2(n) {
     return n == null ? "—" : n.toFixed(2);
   }
@@ -39,31 +46,44 @@
     );
   }
 
-  // parse: "7 days ago", "22 hours ago", "37 seconds ago"
-  function agoToMinutes(s) {
+  // Parse row[7] like "11/2/2025" into a Date at 00:00 local time.
+  // Returns milliseconds since epoch, or null.
+  function parseSheetDateMDY(s) {
     if (!s) return null;
-    const t = String(s).toLowerCase();
-    const m = t.match(
-      /(\d+)\s*(second|minute|hour|day|week|month|year)s?\s+ago/
-    );
+    const t = String(s).trim();
+    // Accept M/D/YYYY or MM/DD/YYYY
+    const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (!m) return null;
-    const v = Number(m[1]);
-    const unit = m[2];
-    const mult =
-      unit === "second"
-        ? 1 / 60
-        : unit === "minute"
-        ? 1
-        : unit === "hour"
-        ? 60
-        : unit === "day"
-        ? 1440
-        : unit === "week"
-        ? 10080
-        : unit === "month"
-        ? 43200
-        : 525600;
-    return v * mult;
+    const mm = Number(m[1]);
+    const dd = Number(m[2]);
+    const yy = Number(m[3]);
+    if (!mm || !dd || !yy) return null;
+    const d = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    return Number.isFinite(d.getTime()) ? d.getTime() : null;
+  }
+
+  // Parse user input "YYYY-MM-DD" into ms at start/end of day
+  function parseISODateStart(s) {
+    const t = String(s ?? "").trim();
+    if (!t) return null;
+    const m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    const yy = Number(m[1]),
+      mm = Number(m[2]),
+      dd = Number(m[3]);
+    const d = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
+    return Number.isFinite(d.getTime()) ? d.getTime() : null;
+  }
+  function parseISODateEnd(s) {
+    const t = String(s ?? "").trim();
+    if (!t) return null;
+    const m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    const yy = Number(m[1]),
+      mm = Number(m[2]),
+      dd = Number(m[3]);
+    const d = new Date(yy, mm - 1, dd, 23, 59, 59, 999);
+    return Number.isFinite(d.getTime()) ? d.getTime() : null;
   }
 
   function readState() {
@@ -78,7 +98,11 @@
       smax: num(el("smax").value),
       dmin: num(el("dmin").value),
       dmax: num(el("dmax").value),
-      age: el("age").value ? Number(el("age").value) : null,
+
+      // Timestamp filters (new)
+      tfrom: parseISODateStart(el("tfrom")?.value),
+      tto: parseISODateEnd(el("tto")?.value),
+
       onlyimg: el("onlyimg").checked,
       includeSteam: el("steamprice").checked,
       dealonly: el("dealonly").checked,
@@ -95,7 +119,10 @@
     if (state.fmax != null) chips.push(["Float ≤", state.fmax]);
     if (state.pmin != null) chips.push(["Sheet ≥", state.pmin]);
     if (state.pmax != null) chips.push(["Sheet ≤", state.pmax]);
-    if (state.age != null) chips.push(["Age ≤", state.age + "d"]);
+    if (state.tfrom != null)
+      chips.push(["From", new Date(state.tfrom).toLocaleDateString()]);
+    if (state.tto != null)
+      chips.push(["To", new Date(state.tto).toLocaleDateString()]);
     if (state.onlyimg) chips.push(["Has image", "true"]);
     if (state.includeSteam) chips.push(["Steam price", "on"]);
     if (state.includeSteam && state.dealonly)
@@ -150,7 +177,7 @@
 
     let items = data.slice();
 
-    // Filters
+    // Search
     if (state.q) {
       items = items.filter((it) => {
         const mn = (it.marketName || "").toLowerCase();
@@ -162,12 +189,16 @@
       });
     }
 
+    // Condition
     if (state.cond)
       items = items.filter(
         (it) => (it.row?.[1] || it.wear || "") === state.cond
       );
+
+    // Image only
     if (state.onlyimg) items = items.filter((it) => !!it.imageUrl);
 
+    // Float
     if (state.fmin != null)
       items = items.filter(
         (it) => num(it.row?.[2]) != null && num(it.row?.[2]) >= state.fmin
@@ -177,7 +208,7 @@
         (it) => num(it.row?.[2]) != null && num(it.row?.[2]) <= state.fmax
       );
 
-    // Sheet price (API returns sheetPrice, fallback row[4])
+    // Sheet price
     if (state.pmin != null)
       items = items.filter(
         (it) =>
@@ -191,11 +222,14 @@
           (it.sheetPrice ?? num(it.row?.[4])) <= state.pmax
       );
 
-    if (state.age != null) {
-      const maxMin = state.age * 1440;
+    // Timestamp filter: uses row[7] like "11/2/2025"
+    if (state.tfrom != null || state.tto != null) {
       items = items.filter((it) => {
-        const mins = agoToMinutes(it.row?.[6]);
-        return mins != null && mins <= maxMin;
+        const ts = parseSheetDateMDY(it.row?.[7]);
+        if (ts == null) return false;
+        if (state.tfrom != null && ts < state.tfrom) return false;
+        if (state.tto != null && ts > state.tto) return false;
+        return true;
       });
     }
 
@@ -229,16 +263,12 @@
     }
 
     // Sorting
-    const receivedKey = (it) => {
-      const mins = agoToMinutes(it.row?.[6]);
-      return mins == null ? 9e18 : mins; // smaller = newer
-    };
     const sheetKey = (it) => it.sheetPrice ?? num(it.row?.[4]);
     const floatKey = (it) => num(it.row?.[2]);
     const nameKey = (it) => it.marketName || it.name || "";
-
     const steamKey = (it) => it.steamLowest ?? null;
     const diffKey = (it) => it.diffPct ?? null;
+    const tsKey = (it) => parseSheetDateMDY(it.row?.[7]) ?? 0;
 
     const cmpNum = (x, y, dir = 1) => {
       if (x == null && y == null) return 0;
@@ -251,10 +281,9 @@
 
     items.sort((a, b) => {
       const s = state.sort;
-      if (s === "received_new")
-        return cmpNum(receivedKey(a), receivedKey(b), 1);
-      if (s === "received_old")
-        return cmpNum(receivedKey(a), receivedKey(b), -1);
+      if (s === "received_new") return cmpNum(tsKey(b), tsKey(a), 1); // timestamp newest
+      if (s === "received_old") return cmpNum(tsKey(a), tsKey(b), 1); // timestamp oldest
+
       if (s === "sheet_asc") return cmpNum(sheetKey(a), sheetKey(b), 1);
       if (s === "sheet_desc") return cmpNum(sheetKey(a), sheetKey(b), -1);
       if (s === "float_asc") return cmpNum(floatKey(a), floatKey(b), 1);
@@ -268,14 +297,14 @@
       return 0;
     });
 
-    // Render table
+    // Render
     tbody.innerHTML = items
       .map((it) => {
         const r = Array.isArray(it.row) ? it.row : [];
         const condition = r[1] || it.wear || "—";
         const floatV = num(r[2]);
         const seed = r[3] || "—";
-        const receivedAgo = r[6] || "—";
+        const tsText = r[7] || "—";
 
         const sheetP = it.sheetPrice ?? num(r[4]);
         const steamLow = it.steamLowest ?? null;
@@ -295,7 +324,7 @@
             )}" alt="" loading="lazy" />
           </div>
         `
-          : `<div class="imgwrap"><span style="color:var(--muted);font-size:11px;">no img</span></div>`;
+          : `<div class="imgwrap"><span style="color:#9ca3af;font-size:11px;">no img</span></div>`;
 
         return `
         <tr>
@@ -310,7 +339,9 @@
                     ${esc(it.marketName || it.name || "—")}
                   </a>
                 </div>
-                <div class="sub">${esc(condition)} • Seed ${esc(seed)}</div>
+                <div class="sub">${esc(condition)} • Seed ${esc(
+          seed
+        )} • TS ${esc(tsText)}</div>
               </div>
             </div>
           </td>
@@ -320,13 +351,13 @@
           <td class="num">${esc(fmt2(steamLow))}</td>
           <td class="num">${esc(fmt2(steamMed))}</td>
           <td class="num ${diffClass}">${esc(fmtPct(diffPct))}</td>
-          <td>${esc(receivedAgo)}</td>
+          <td>${esc(tsText)}</td>
         </tr>
       `;
       })
       .join("");
 
-    // CSP-safe image handlers (no inline onload)
+    // CSP-safe image handlers
     const imgs = document.querySelectorAll("img.item-img");
     imgs.forEach((img) => {
       const src = img.getAttribute("data-src");
@@ -369,8 +400,6 @@
     el("cond").value = "";
     el("fmin").value = "";
     el("fmax").value = "";
-    el("age").value = "";
-    el("sort").value = "received_new";
 
     el("pmin").value = "";
     el("pmax").value = "";
@@ -379,10 +408,15 @@
     el("dmin").value = "";
     el("dmax").value = "";
 
+    if (el("tfrom")) el("tfrom").value = "";
+    if (el("tto")) el("tto").value = "";
+
     el("onlyimg").checked = false;
     el("steamprice").checked = false;
     el("dealonly").checked = false;
     el("autorefresh").checked = true;
+
+    el("sort").value = "received_new";
 
     applyAutoRefresh();
     load();
@@ -394,8 +428,6 @@
       "cond",
       "fmin",
       "fmax",
-      "age",
-      "sort",
       "pmin",
       "pmax",
       "smin",
@@ -404,10 +436,15 @@
       "dmax",
       "onlyimg",
       "dealonly",
+      "sort",
+      "tfrom",
+      "tto",
     ];
     rerenderIds.forEach((id) => {
-      el(id).addEventListener("input", render);
-      el(id).addEventListener("change", render);
+      const node = el(id);
+      if (!node) return;
+      node.addEventListener("input", render);
+      node.addEventListener("change", render);
     });
 
     el("steamprice").addEventListener("change", load);
